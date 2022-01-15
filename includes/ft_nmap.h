@@ -27,6 +27,11 @@
 #include <sys/types.h>
 #include <ifaddrs.h>
 
+#include <sys/socketvar.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+
 #define PING_PACKET_SIZE 56
 
 typedef struct ICMP_pkt
