@@ -1,0 +1,9 @@
+services:
+  nmap:
+    build: ./
+    restart: always
+    volumes:
+      - .:/nmap
+    ports:
+      - '22:22'
+#    network_mode: "host"

@@ -1,0 +1,42 @@
+
+client send TCP / SYN (asking for synchronisation and connection)
+->
+server responds with TCP / SYN ACK (asking for open connection too)
+->
+client reponds with TCP / ACK (saying yes, now two-way connection is established)
+
+
+
+when client or server wants to close connection
+TCP / FIN ACK is send, then TCP / FIN ACK is
+
+TCT / RST when connection is closed anormaly
+
+
+SYN : demande de synchronisation ou établissement de connexion
+ACK : signale que le paquet est un accusé de réception (acknowledgement)
+RST : rupture anormale de la connexion (reset)
+FIN : demande la fin de la connexion
+
+TCP XMAS scan va envoyer des paquets TCP avec les flags URG, PUSH et FIN à 1
+-> Si port/service actif: aucun packet n'est retourné, sinon TCP / RST ACK (on sait donc differencier un port OUVERT/FERMER)
+
+TCP XMAS scan n'est pas capable de détecter les pare-feu
+
+
+TCP NULL scan va envoyer des paquets TCP scan avec tous les flags à 0
+PORT Ouvert: Pas de réponse
+PORT Fermé: reponse RST / ACK
+
+TCP NULL scan n'est pas capable de détecter les pare-feu
+
+
+
+Le TCP ACK scan est utilisé pour détecter la présence d'un pare-feu sur la machine cible ou entre la machine cible et la machine de scan.
+le TCP ACK scan ne va pas avoir pour objectif de voir quel port est ouvert sur la machine finale, mais plutôt de savoir si un système de filtrage est actif
+permet de savoir si un system de filtrage est actif en répondant pour chaque port par "filtered" ou "unfiltered".
+
+
+
+
+FILTRED : protégé par un parefeu
