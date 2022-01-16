@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 
     perform_tcp(&nmap);
 
-    sleep(10000);
+//    sleep(10000);
 
     return 0;
 }

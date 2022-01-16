@@ -1,6 +1,5 @@
 #include "../includes/ft_nmap.h"
 
-
 struct pseudo_header    //needed for checksum calculation
 {
     unsigned int source_address;
@@ -11,31 +10,6 @@ struct pseudo_header    //needed for checksum calculation
 
     struct tcphdr tcp;
 };
-
-int get_local_ip ( char * buffer)
-{
-    int sock = socket ( AF_INET, SOCK_DGRAM, 0);
-
-    const char* kGoogleDnsIp = "8.8.8.8";
-    int dns_port = 53;
-
-    struct sockaddr_in serv;
-
-    memset( &serv, 0, sizeof(serv) );
-    serv.sin_family = AF_INET;
-    serv.sin_addr.s_addr = inet_addr(kGoogleDnsIp);
-    serv.sin_port = htons( dns_port );
-
-    int err = connect( sock , (const struct sockaddr*) &serv , sizeof(serv) );
-
-    struct sockaddr_in name;
-    socklen_t namelen = sizeof(name);
-    err = getsockname(sock, (struct sockaddr*) &name, &namelen);
-
-    const char *p = inet_ntop(AF_INET, &name.sin_addr, buffer, 100);
-
-    close(sock);
-}
 
 unsigned short csum(unsigned short *ptr,int nbytes)
 {
@@ -61,21 +35,58 @@ unsigned short csum(unsigned short *ptr,int nbytes)
     return(answer);
 }
 
+int get_local_ip()
+{
+    struct ifaddrs *ifaddr;
+    int family, s;
+    char host[NI_MAXHOST];
+
+    if (getifaddrs(&ifaddr) == -1)
+    {
+        printf("getifaddrs error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    for (struct ifaddrs *ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
+    {
+        if (ifa->ifa_addr == NULL)
+            continue;
+
+        family = ifa->ifa_addr->sa_family;
+
+        /* Display interface name and family (including symbolic
+           form of the latter for the common families). */
+
+//        printf("%-8s %s (%d)\n",
+//               ifa->ifa_name,
+//               (family == AF_PACKET) ? "AF_PACKET" :
+//               (family == AF_INET) ? "AF_INET" :
+//               (family == AF_INET6) ? "AF_INET6" : "???",
+//               family);
+
+        if (family == AF_INET || family == AF_INET6) {
+            s = getnameinfo(ifa->ifa_addr,
+                            (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                            sizeof(struct sockaddr_in6),
+                            host, NI_MAXHOST,
+                            NULL, 0, NI_NUMERICHOST);
+            if (s != 0) {
+                printf("getnameinfo() failed: %s\n", gai_strerror(s));
+                exit(EXIT_FAILURE);
+            }
+
+            printf("\t\taddress: <%s>\n", host);
+
+        }
+    }
+}
+
 int perform_tcp(struct nmap *nmap)
 {
+
     int tcp_socket = socket (AF_INET, SOCK_RAW , IPPROTO_TCP);
     if (tcp_socket < 0)
         str_error("tcp socket failed", 1);
-
-    struct sockaddr_in localaddr ;
-    localaddr.sin_family = AF_INET; /* Protocole internet */
-    localaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    localaddr.sin_port = htons(81);
-
-    struct sockaddr_in remote = {0};
-    remote.sin_addr.s_addr = inet_addr("179.60.192.3"); //Local Host
-    remote.sin_family = AF_INET;
-    remote.sin_port = htons(80);
 
     //Datagram to represent the packet
     char datagram[4096];
@@ -84,16 +95,15 @@ int perform_tcp(struct nmap *nmap)
     struct iphdr *iph = (struct iphdr *)datagram;
     struct tcphdr *tcph = (struct tcphdr *) (datagram + sizeof (struct ip));
 
-    struct sockaddr_in  dest;
     struct pseudo_header psh = {0};
 
+    char *target = "179.60.192.3";
+    char *source = "172.19.0.2";
+
     struct in_addr dest_ip;
-    dest_ip.s_addr = inet_addr("179.60.192.3");
+    dest_ip.s_addr = inet_addr(target);
 
     int source_port = 43591;
-    char source_ip[20];
-    get_local_ip(source_ip);
-    printf("Local source IP is %s \n" , source_ip);
     //Fill in the IP Header
     iph->ihl = 5;
     iph->version = 4;
@@ -104,9 +114,8 @@ int perform_tcp(struct nmap *nmap)
     iph->ttl = 64;
     iph->protocol = IPPROTO_TCP;
     iph->check = 0;		//Set to 0 before calculating checksum
-    iph->saddr = inet_addr ( source_ip );	//Spoof the source ip address
+    iph->saddr = inet_addr ( source );	//Spoof the source ip address
     iph->daddr = dest_ip.s_addr;
-
     iph->check = csum ((unsigned short *) datagram, iph->tot_len >> 1);
 
     //TCP Header
@@ -121,7 +130,7 @@ int perform_tcp(struct nmap *nmap)
     tcph->psh=0;
     tcph->ack=0;
     tcph->urg=0;
-    tcph->window = htons ( 80 );	// maximum allowed window size
+    tcph->window = htons ( 60000 );	// maximum allowed window size
     tcph->check = 0; //if you set a checksum to zero, your kernel's IP stack should fill in the correct checksum during transmission
     tcph->urg_ptr = 0;
     tcph->check = 0;
@@ -136,30 +145,27 @@ int perform_tcp(struct nmap *nmap)
         exit(0);
     }
 
+    struct sockaddr_in  dest;
+
     dest.sin_family = AF_INET;
     dest.sin_addr.s_addr = dest_ip.s_addr;
 
-
-    psh.source_address = inet_addr( source_ip );
+    tcph->dest = htons ( 80 );
+    tcph->check = 0;
+//
+    psh.source_address = inet_addr( source );
     psh.dest_address = dest.sin_addr.s_addr;
     psh.placeholder = 0;
     psh.protocol = IPPROTO_TCP;
     psh.tcp_length = htons( sizeof(struct tcphdr) );
 
-    memcpy(&psh.tcp , (void*)&tcph , sizeof (struct tcphdr));
+    memcpy(&psh.tcp , tcph , sizeof (struct tcphdr));
 
     tcph->check = csum( (unsigned short*) &psh , sizeof (struct pseudo_header));
-
-
-    struct iphdr test;
-    memcpy(&test, &datagram, sizeof(struct iphdr));
-
-
-
-
-    if (sendto (tcp_socket, datagram,sizeof(struct iphdr) + sizeof(struct tcphdr),0 , (struct sockaddr *)&nmap->host_target, sizeof (struct sockaddr)) < 0)
+    if ( sendto (tcp_socket, datagram , sizeof(struct iphdr) + sizeof(struct tcphdr) , 0 , (struct sockaddr *) &dest, sizeof (dest)) < 0)
     {
         printf ("Error sending syn packet. Error number : %d . Error message : %s \n" , errno , strerror(errno));
+        exit(0);
     }
 
 }
