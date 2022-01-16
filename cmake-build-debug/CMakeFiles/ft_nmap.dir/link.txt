@@ -1,1 +1,0 @@
-/usr/bin/cc -g   CMakeFiles/ft_nmap.dir/srcs/main.c.o CMakeFiles/ft_nmap.dir/srcs/utils.c.o CMakeFiles/ft_nmap.dir/srcs/icmp.c.o CMakeFiles/ft_nmap.dir/srcs/args.c.o CMakeFiles/ft_nmap.dir/srcs/host_resolve.c.o CMakeFiles/ft_nmap.dir/srcs/tcp.c.o  -o ft_nmap 

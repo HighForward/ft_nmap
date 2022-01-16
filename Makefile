@@ -1,4 +1,4 @@
-SRCS		=	./srcs/main.c ./srcs/utils.c ./srcs/icmp.c ./srcs/args.c ./srcs/host_resolve.c ./srcs/tcp.c
+SRCS		=	./srcs/main.c ./srcs/utils.c ./srcs/icmp.c ./srcs/args.c ./srcs/host_resolve.c ./srcs/tcp.c ./srcs/fill_pkt.c
 
 NAME		=	ft_nmap
 

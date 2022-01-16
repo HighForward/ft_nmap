@@ -41,12 +41,25 @@ typedef struct ICMP_pkt
 
 } ICMP_pkt;
 
+struct pseudo_header    //needed for checksum calculation
+{
+    unsigned int source_address;
+    unsigned int dest_address;
+    unsigned char placeholder;
+    unsigned char protocol;
+    unsigned short tcp_length;
+
+    struct tcphdr tcp;
+};
+
 typedef struct nmap
 {
     int icmp_socket;
     char *arg_host;
     struct hostent *hostent;
     struct sockaddr_in host_target;
+    char src_ip[INET_ADDRSTRLEN];
+    char dest_ip[INET_ADDRSTRLEN];
 } nmap;
 
 int str_error(char *str, int err);
@@ -63,5 +76,11 @@ int host_resolve(struct nmap *nmap);
 
 //TCP HANDLER
 int perform_tcp(struct nmap *nmap);
+unsigned short csum(unsigned short *ptr,int nbytes);
+
+//FILL_PKT
+int fill_ip_header(struct iphdr *iph, struct nmap *nmap);
+int fill_tcp_header(struct tcphdr *tcph, struct nmap *nmap);
+int fill_pseudo_header(struct pseudo_header *psh, struct nmap *nmap);
 
 #endif

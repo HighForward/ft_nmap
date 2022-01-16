@@ -13,5 +13,8 @@ int host_resolve(struct nmap *nmap)
     memcpy(&nmap->host_target.sin_addr, nmap->hostent->h_addr_list[0], nmap->hostent->h_length);
     nmap->host_target.sin_family = AF_INET;
 
+    char *target = inet_ntoa(nmap->host_target.sin_addr);
+    strncpy(nmap->dest_ip, target, strlen(target));
+
     return (1);
 }
