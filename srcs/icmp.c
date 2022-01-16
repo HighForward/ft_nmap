@@ -59,10 +59,11 @@ int recv_icmp(struct nmap *nmap)
         ICMP_pkt *tmp_ICMP;
         tmp_ICMP = (ICMP_pkt *) (pck_reply + sizeof(struct ip));
         if (tmp_ICMP->hdr.code == 0 && tmp_ICMP->hdr.type == 0)
-            printf("icmp reply\n");
-
+        {
+//            printf("icmp reply\n");
+        }
     } else
-        printf("not received\n");
+        printf("icmp not received\n");
 }
 
 int perform_icmp(nmap *nmap)

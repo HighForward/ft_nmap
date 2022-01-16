@@ -35,17 +35,13 @@ unsigned short csum(unsigned short *ptr,int nbytes)
     return(answer);
 }
 
-int get_local_ip()
+char *get_local_ip(char *host)
 {
     struct ifaddrs *ifaddr;
     int family, s;
-    char host[NI_MAXHOST];
 
     if (getifaddrs(&ifaddr) == -1)
-    {
-        printf("getifaddrs error\n");
-        exit(EXIT_FAILURE);
-    }
+        str_error("getifaddrs", 1);
 
     for (struct ifaddrs *ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
     {
@@ -54,35 +50,19 @@ int get_local_ip()
 
         family = ifa->ifa_addr->sa_family;
 
-        /* Display interface name and family (including symbolic
-           form of the latter for the common families). */
+        if (family == AF_INET && strcmp(ifa->ifa_name, "eth0") == 0) {
+            if (getnameinfo(ifa->ifa_addr,sizeof(struct sockaddr_in), host, NI_MAXHOST,NULL, 0, NI_NUMERICHOST) != 0)
+                str_error("error getnameinfo", 1);
 
-//        printf("%-8s %s (%d)\n",
-//               ifa->ifa_name,
-//               (family == AF_PACKET) ? "AF_PACKET" :
-//               (family == AF_INET) ? "AF_INET" :
-//               (family == AF_INET6) ? "AF_INET6" : "???",
-//               family);
-
-        if (family == AF_INET || family == AF_INET6) {
-            s = getnameinfo(ifa->ifa_addr,
-                            (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                            sizeof(struct sockaddr_in6),
-                            host, NI_MAXHOST,
-                            NULL, 0, NI_NUMERICHOST);
-            if (s != 0) {
-                printf("getnameinfo() failed: %s\n", gai_strerror(s));
-                exit(EXIT_FAILURE);
-            }
-
-            printf("\t\taddress: <%s>\n", host);
-
+            break;
         }
     }
 }
 
 int perform_tcp(struct nmap *nmap)
 {
+    char host[NI_MAXHOST];
+    get_local_ip(host);
 
     int tcp_socket = socket (AF_INET, SOCK_RAW , IPPROTO_TCP);
     if (tcp_socket < 0)
@@ -97,8 +77,10 @@ int perform_tcp(struct nmap *nmap)
 
     struct pseudo_header psh = {0};
 
-    char *target = "179.60.192.3";
-    char *source = "172.19.0.2";
+    char *target = inet_ntoa(nmap->host_target.sin_addr);
+    char *source = host;
+
+    printf("local ip: %s : target ip: %s\n", source, target);
 
     struct in_addr dest_ip;
     dest_ip.s_addr = inet_addr(target);
@@ -150,9 +132,9 @@ int perform_tcp(struct nmap *nmap)
     dest.sin_family = AF_INET;
     dest.sin_addr.s_addr = dest_ip.s_addr;
 
-    tcph->dest = htons ( 80 );
+    tcph->dest = htons ( 443 );
     tcph->check = 0;
-//
+
     psh.source_address = inet_addr( source );
     psh.dest_address = dest.sin_addr.s_addr;
     psh.placeholder = 0;
