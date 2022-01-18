@@ -1,4 +1,5 @@
-SRCS		=	./srcs/main.c ./srcs/utils.c ./srcs/icmp.c ./srcs/args.c ./srcs/host_resolve.c ./srcs/tcp.c ./srcs/fill_pkt.c
+SRCS		=	./srcs/main.c ./srcs/utils.c ./srcs/icmp.c ./srcs/args.c ./srcs/host_resolve.c ./srcs/tcp.c ./srcs/fill_pkt.c \
+				./srcs/sniffer.c ./srcs/thread.c
 
 NAME		=	ft_nmap
 
@@ -23,7 +24,7 @@ all: ${NAME}
 # 				@#$(MAKE) -C ../libft/
 
 ${NAME}: ${OBJS} ${H}
-			    @$(CC) ${OBJS} -o ${NAME}
+			    @$(CC) ${OBJS} -lpcap -lpthread -o ${NAME}
 			    @echo "\033[1;32m > Building <\033[0m\033[1;36m ${NAME}\033[0m"
 
 clean:

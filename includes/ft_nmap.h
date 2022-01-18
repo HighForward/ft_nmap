@@ -4,33 +4,27 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <sys/socketvar.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <netinet/ip_icmp.h>
-#include <signal.h>
-#include <sys/time.h>
-
+#include <netinet/tcp.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <sys/select.h>
+#include <signal.h>
 
-#include <stdio.h>
 #include <pcap.h>
-#include <stdlib.h>
-#include <netdb.h>
-
-#include <sys/types.h>
 #include <ifaddrs.h>
 
-#include <sys/socketvar.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
+#include <errno.h>
+#include <pthread.h>
+
+#include<netinet/ip.h>	//Provides declarations for ip header
+#include<net/ethernet.h>
 
 #define PING_PACKET_SIZE 56
 
@@ -82,5 +76,12 @@ unsigned short csum(unsigned short *ptr,int nbytes);
 int fill_ip_header(struct iphdr *iph, struct nmap *nmap);
 int fill_tcp_header(struct tcphdr *tcph, struct nmap *nmap);
 int fill_pseudo_header(struct pseudo_header *psh, struct nmap *nmap);
+
+//SNIFFER
+int sniffer();
+void *thread_sniffer(void *arg);
+
+//THREAD
+int launch_thread();
 
 #endif

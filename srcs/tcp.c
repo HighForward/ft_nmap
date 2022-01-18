@@ -78,7 +78,7 @@ int perform_tcp(struct nmap *nmap)
 
 
     //now change dest port on scanning loop (maybe other modif)
-    tcph->dest = htons ( 100 );
+    tcph->dest = htons ( 80 );
     tcph->check = csum( (unsigned short*) &psh , sizeof (struct pseudo_header));
 
 //    memcpy(&psh.tcp , tcph , sizeof (struct tcphdr)); ????????????????

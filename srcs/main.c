@@ -14,11 +14,15 @@ int main(int argc, char **argv)
     printf("Starting Nmap 1.00 ( mbrignol )\n");
     printf("ft_nmap scan report for %s (%s)\n", nmap.arg_host, nmap.arg_host);
 
+
+    launch_thread();
+
     perform_icmp(&nmap);
 
     perform_tcp(&nmap);
 
-//    sleep(10000);
+
+    sleep(10);
 
     return 0;
 }
